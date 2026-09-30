@@ -1,19 +1,25 @@
 #!/bin/bash
 
-GIT_ROOT=$HOME/SciEdge
+GIT_ROOT=$HOME/EPAD
+ctr=epad_image
 
-
-ctr=sciedge_image
 buildah_run_command="sudo buildah run --net=host"
 
 sudo buildah from --name $ctr docker://rockylinux:8
-$buildah_run_command $ctr -- dnf -y module enable ruby:2.7
-$buildah_run_command $ctr -- dnf -y module enable nodejs:14
+$buildah_run_command $ctr -- dnf -y module reset ruby
+$buildah_run_command $ctr -- dnf -y module enable ruby:3.3
+$buildah_run_command $ctr -- dnf -y module reset nodejs
+$buildah_run_command $ctr -- dnf -y module enable nodejs:22
 $buildah_run_command $ctr -- dnf install -y dnf-plugins-core systemd
 $buildah_run_command $ctr -- dnf install -y epel-release
 $buildah_run_command $ctr -- dnf config-manager --set-enabled powertools
-$buildah_run_command $ctr -- yum install -y https://yum.osc.edu/ondemand/2.0/ondemand-release-web-2.0-1.noarch.rpm
-$buildah_run_command $ctr -- dnf install -y ondemand vim openssh-server python3 findutils nc
+
+# ood 4.2.4
+$buildah_run_command $ctr -- rpm --import https://yum.osc.edu/ondemand/RPM-GPG-KEY-ondemand
+$buildah_run_command $ctr -- dnf install -y https://yum.osc.edu/ondemand/4.2/ondemand-release-web-4.2-1.el8.noarch.rpm
+$buildah_run_command $ctr -- dnf install -y ondemand
+
+$buildah_run_command $ctr -- dnf install -y vim openssh-server python3 findutils nc
 $buildah_run_command $ctr -- dnf install -y mod_auth_openidc
 $buildah_run_command $ctr -- dnf install -y mod_authnz_pam mod_proxy_html openldap-clients
 sudo buildah run $ctr -- ln -s /usr/bin/python3 /usr/bin/python
@@ -22,6 +28,22 @@ $buildah_run_command $ctr /bin/bash -c 'wget https://raw.githubusercontent.com/T
 $buildah_run_command $ctr -- dnf install -y turbovnc
 $buildah_run_command $ctr -- pip3 install flask
 sudo buildah run $ctr -- mv /etc/httpd/conf.d/ssl.conf /etc/httpd/conf.d/ssl.off
+
+#pre-requisits for nvidia drivers and cuda
+#$buildah_run_command $ctr -- dnf install -y pciutils
+#$buildah_run_command $ctr -- dnf install -y net-tools
+#$buildah_run_command $ctr -- dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
+
+# cuda 
+#$buildah_run_command $ctr -- dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+
+# nvidia driver install"
+#$buildah_run_command $ctr -- dnf clean expire-cache 
+#$buildah_run_command $ctr -- dnf install -y nvidia-driver
+#$buildah_run_command $ctr -- dnf install -y nvidia-settings
+#$buildah_run_command $ctr -- dnf install -y cuda-toolkit 
+#$buildah_run_command $ctr -- dnf install -y nvidia-driver-cuda
+ 
 sudo buildah run $ctr -- mkdir /var/log/apache_testing
 # This section adds the ability to make system users that can login
 # for debugging

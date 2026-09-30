@@ -59,13 +59,13 @@ If you are not using the standard letsencrypt cert location you need to tweak th
 #### Build the image and start the pod
 
 The default value of the `GIT_ROOT` variable is '~/EPAD', the top level directory of the git repository. 
-The default container image name is `edge_image`. Update both the build_edge_image.sh and start_edge_ctr.sh files as needed. 
+The default container image name is `epad_image`. Update both the build_edge_image.sh and start_edge_ctr.sh files as needed. 
 
-Now you can run `./build_edge_image.sh`
+Now you can run `./build_epad_image.sh`
 
-To start the pod for the first time, do `./start_edge_ctr.sh`
+To start the pod for the first time, do `./start_epad_ctr.sh`
 
-You can get a shell inside the running container with `podman exec -it edge_ctr bash`
+You can get a shell inside the running container with `podman exec -it epad_ctr bash`
 
 #### Users and Groups
 

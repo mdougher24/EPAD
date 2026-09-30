@@ -15,6 +15,12 @@ listen_addr_port: 443
 # Default: null (don't use name-based Virtual Host)
 servername: <hostname> 
 
+# The server aliases used for the name-based Virtual Host
+# Example:
+#     server_aliases:
+#       - foo.example.com
+#server_aliases: []
+
 # The server name used for rewrites
 # Example:
 #     proxy_server: 'proxy.example.com'
@@ -43,6 +49,12 @@ ssl:
   - 'SSLCertificateKeyFile "/etc/letsencrypt/live/<hostname>/privkey.pem"'
   - 'SSLCertificateChainFile "/etc/letsencrypt/live/<hostname>/fullchain.pem"'
 
+# Disable logging entirely. With this you can have custom log directives
+# in a separate configuration file.
+# Example:
+#     disable_logs: true
+# Default: false (logs are enabled)
+#disable_logs: false
 
 # Root directory of log files (can be relative ServerRoot)
 # Example:
@@ -68,12 +80,19 @@ ssl:
 # Example:
 #     logformat: '"%v %h \"%r\" %>s %O \"%{Referer}i\" \"%{User-Agent}i\" %{SSL_PROTOCOL}x %T"'
 # Default: Apache combined format
+#logformat: Apache combine format
 
 # Should RewriteEngine be used
 # Example:
 #     use_rewrites: false
 # Default: true
 #use_rewrites: true
+
+# Specify the host to redirect to when redirecting from port 80
+# Example:
+#     http_redirect_host: my.proxy.host
+# Default: '%{HTTP_HOST}'
+#http_redirect_host: '%{HTTP_HOST}'
 
 # Should Maintenance Rewrite rules be added
 # Example:
@@ -102,6 +121,18 @@ use_maintenance: false
 #   security_strict_transport: false
 # Default: true when ssl is enabled, false otherwise
 #security_strict_transport: false
+
+# Fix Cross-Site-Request authentication headers proxying
+# Example:
+#   strip_proxy_headers: []
+# Default: ["Authorization", "OIDC_CLAIM_sub", "OIDC_CLAIM_preferred_username", "OIDC_CLAIM_given_name", "OIDC_CLAIM_zoneinfo", "OIDC_CLAIM_locale", "OIDC_CLAIM_email", "OIDC_CLAIM_email_verified", "OIDC_CLAIM_iss", "OIDC_CLAIM_nonce", "OIDC_CLAIM_aud", "OIDC_CLAIM_acr", "OIDC_CLAIM_azp", "OIDC_CLAIM_auth_time", "OIDC_CLAIM_exp", "OIDC_CLAIM_iat", "OIDC_CLAIM_jti", "OIDC_access_token", "OIDC_access_token_expires"]
+#strip_proxy_headers: ["Authorization", "OIDC_CLAIM_sub", "OIDC_CLAIM_preferred_username", "OIDC_CLAIM_given_name", "OIDC_CLAIM_zoneinfo", "OIDC_CLAIM_locale", "OIDC_CLAIM_email", "OIDC_CLAIM_email_verified", "OIDC_CLAIM_iss", "OIDC_CLAIM_nonce", "OIDC_CLAIM_aud", "OIDC_CLAIM_acr", "OIDC_CLAIM_azp", "OIDC_CLAIM_auth_time", "OIDC_CLAIM_exp", "OIDC_CLAIM_iat", "OIDC_CLAIM_jti", "OIDC_access_token", "OIDC_access_token_expires"]
+
+# Fix Cross-Site-Request authentication cookies proxying
+# Example:
+#   strip_proxy_cookies: []
+# Default: ["mod_auth_openidc_session_\\d+", "mod_auth_openidc_session"]
+#strip_proxy_cookies: ["mod_auth_openidc_session_\\d+", "mod_auth_openidc_session"]
 
 # Root directory of the Lua handler code
 # Example:
@@ -157,22 +188,20 @@ auth:
   - 'AuthType openid-connect'
   - 'Require valid-user'
 
+# List of custom apache directives to apply to the entire vhost.
+# Note this is an array of strings.
+# Example:
+#     custom_vhost_directives:
+#       - 'SetEnv SPECIAL_ENV_VAR custom'
+# Default: [] (no custom directives)
+#custom_vhost_directives: []
+
 # Redirect user to the following URI when accessing root URI
 # Example:
 #     root_uri: '/my_uri'
 #     # https://www.example.com/ => https://www.example.com/my_uri
 # Default: '/pun/sys/dashboard' (default location of the OOD Dashboard app)
 #root_uri: '/pun/sys/dashboard'
-
-# Track server-side analytics with a Google Analytics account and property
-# (see https://github.com/OSC/mod_ood_proxy/blob/master/lib/analytics.lua for
-# information on how to setup the GA property)
-# Example:
-#     analytics:
-#       url: 'http://www.google-analytics.com/collect'
-#       id: 'UA-79331310-4'
-# Default: null (do not track)
-#analytics: null
 
 #
 # Publicly available assets
@@ -233,6 +262,35 @@ node_uri: '/node'
 #     rnode_uri: '/rnode'
 # Default: null (disable this feature)
 rnode_uri: '/rnode'
+
+# This path will force the upstream connection to use HTTPS or WSS, used for
+# backend applications that are running their own SSL termination
+# Sub-uri used to reverse proxy to backend web server running on node that knows
+# the full URI path
+# Example:
+#     secure_node_uri: '/secure-node'
+# Default: null (disable this feature)
+#secure_node_uri: null
+
+# This path will force the upstream connection to use HTTPS or WSS, used for
+# backend applications that are running their own SSL termination
+# Sub-uri used to reverse proxy to backend web server running on node that
+# ONLY uses *relative* URI paths
+# Example:
+#     secure_rnode_uri: '/secure-rnode'
+# Default: null (disable this feature)
+#secure_rnode_uri: null
+
+# List of SSL Proxy Apache directives
+# These settings control SSL validation for the upstream connection and require
+# a secure_[r]node_uri to be defined
+# to.
+# Example:
+#     ssl_proxy:
+#       - 'SSLProxyCheckPeerCN Off'
+#       - 'SSLProxyCheckPeerName Off'
+# Default: [] (no additional SSL proxy settings)
+#ssl_proxy: []
 
 #
 # Per-user NGINX Passenger apps
@@ -323,6 +381,27 @@ oidc_uri: /oidc
 # Default: null (display error to user if mapping fails)
 #register_root: null
 
+# Path to file or directory on filesystem that serves the HTML code used to register
+# an unmapped user
+# Example:
+#     register_root: '/var/www/ood/register/register.wsgi'
+# Default: @register_root
+#register_path: '/var/www/ood/register/register.wsgi'
+
+# Method for url used to register an unmapped user
+# Example:
+#     register_method: 'ScriptAlias'
+# Default: 'Alias'
+#register_method: 'WSGIScriptAlias'
+
+# List of SSL Apache directives added to register an unmapped user
+# Example:
+#     register_method:
+#     - 'WSGIDaemonProcess register user=www-data group=www-data threads=5 home=/var/www/flask-apps/register'
+# Default: null
+#register_method_options:
+#- 'WSGIDaemonProcess register user=www-data group=www-data threads=5 home=/var/www/flask-apps/register'
+
 # OIDC metadata URL
 # Example:
 #     oidc_provider_metadata_url: https://example.com:5554/.well-known/openid-configuration
@@ -354,33 +433,29 @@ oidc_remote_user_claim: email
 # Default: "openid profile email"
 oidc_scope: "email openid"
 
-
-oidc_session_inactivity_timeout: 28800
-oidc_session_max_duration: 28800
-oidc_state_max_number_of_cookies: "10 true"
-oidc_settings:
-  OIDCPassIDTokenAs: "serialized"
-  OIDCPassRefreshToken: "On"
-  OIDCPassClaimsAs: "environment"
-  OIDCStripCookies: "mod_auth_openidc_session mod_auth_openidc_session_chunks mod_auth_openidc_session_0 mod_auth_openidc_session_1"
+# OIDC crypto passphrase
+# Example:
+#   oidc_crypto_passphrase: "f1d2d2f924e986ac86fdf7b36c94bcdf32beec15"
+# Default: SHA1 sum of servername
+oidc_crypto_passphrase: "<passphrase>"
 
 # OIDC session inactivity timeout
 # Example:
 #     oidc_session_inactivity_timeout: 28800
 # Default: 28800
-#oidc_session_inactivity_timeout: 28800
+oidc_session_inactivity_timeout: 28800
 
 # OIDC session max duration
 # Example:
 #     oidc_session_max_duration: 28800
 # Default: 28800
-#oidc_session_max_duration: 28800
+oidc_session_max_duration: 28800
 
 # OIDC max number of state cookies and if to automatically clean old cookies
 # Example:
 #     oidc_state_max_number_of_cookies: "10 true"
 # Default: "10 true"
-#oidc_state_max_number_of_cookies: "10 true"
+oidc_state_max_number_of_cookies: "10 true"
 
 # OIDC Enable SameSite cookie
 # When ssl is defined this defaults to 'Off'
@@ -396,6 +471,18 @@ oidc_settings:
 #       OIDCPassIDTokenAs: serialized
 #       OIDCPassRefreshToken: On
 # Default: {} (empty hash)
+oidc_settings:
+  OIDCPassIDTokenAs: "serialized"
+  OIDCPassRefreshToken: "On"
+  OIDCPassClaimsAs: "environment"
+  OIDCStripCookies: "mod_auth_openidc_session mod_auth_openidc_session_chunks mod_auth_openidc_session_0 mod_auth_openidc_session_1"
+
+# The Dex URI behind Apache reverse proxy
+# Set to false or null to disable Dex behind the Apache reverse proxy
+# Example:
+#   dex_uri: /auth
+# Default: /dex
+#dex_uri: /dex
 
 # Dex configurations, values inside the "dex" structure are directly used to configure Dex
 # If the value for "dex" key is false or null, Dex support is disabled

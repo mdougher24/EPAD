@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GIT_ROOT=$HOME/EPAD
+GIT_ROOT=/opt/EPAD
 ctr=epad_image
 
 buildah_run_command="sudo buildah run --net=host"

@@ -3,10 +3,21 @@
 INPUT=$(echo $1 | sed -r 's/(.*)%40/\1@/')
 USERNAME=$(echo $INPUT | awk -F@ '{print $1}')
 
+LDAPSERVER="ldap://ldap.hpc.rutgers.edu"
+LDAPDN="dc=hpc,dc=rutgers,dc=edu"
+LDAPGROUP="cryoem"
+LOCALUSER=""
+LDAPUSER="null"
+
 if [ $? -eq 0  ]; then
 
 	#Can check ldap here if ldap is configured
-	LDAPUSER=$(ldapsearch -x mail=$INPUT | grep "uid:" | awk '{print $2}')
+        if [ -d /etc/pam.d ]; then
+            if [ -f /etc/sssd/sssd.conf ] || [ -f /etc/nslcd.conf ] || [ -f /etc/ldap.conf ]; then
+	        LDAPUSER=$(ldapsearch -x mail=$INPUT | grep "uid:" | awk '{print $2}')
+#       	LDAPUSER=$(ldapsearch -ZZ -x -H $LDAPSERVER -b $LDAPDN uid=$USERNAME | grep "uid:" | awk '{print $2}')
+            fi
+        fi
 
 
         # getent passwd is inside the container and therefor will only return local users from the volume mounted passwd and group files 	

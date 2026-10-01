@@ -3,9 +3,9 @@
 INPUT=$(echo $1 | sed -r 's/(.*)%40/\1@/')
 USERNAME=$(echo $INPUT | awk -F@ '{print $1}')
 
-LDAPSERVER="ldap://ldap.hpc.rutgers.edu"
-LDAPDN="dc=hpc,dc=rutgers,dc=edu"
-LDAPGROUP="cryoem"
+#LDAPSERVER="ldap://<ldapserver>"
+#LDAPDN="dc=<host>,dc=<institute>,dc=<edu or com>"
+#LDAPGROUP="cryoem"
 LOCALUSER=""
 LDAPUSER="null"
 
